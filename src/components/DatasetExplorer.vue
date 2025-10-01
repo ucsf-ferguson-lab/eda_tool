@@ -169,12 +169,15 @@ export default defineComponent({
     const handleFileUpload = (event: Event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (!file) return;
+
+      //infer results type
+      //todo: strict typing
       Papa.parse(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
-        complete(results: { data: any[]; meta: { fields: string[] } }) {
-          data.value = results.data;
+        complete(results) {
+          data.value = results.data as any[];
           columns.value = results.meta.fields || [];
           calculateStats();
         },
