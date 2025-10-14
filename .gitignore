@@ -58,3 +58,4 @@ Dev.dockerfile
 *.njsproj
 *.sln
 *.sw?
+.ruff_cache

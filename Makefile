@@ -1,10 +1,10 @@
 .PHONY: fmt run clean
 
 fmt:
-	npx prettier --write .
+	ruff format
 
 run: fmt
-	npm run dev
+	python3 -m streamlit run src/app.py
 
 clean:
-	find . -type d -name "node_modules" | xargs rm -rf
+	find . -type d -name ".ruff_cache" | xargs rm -rf
