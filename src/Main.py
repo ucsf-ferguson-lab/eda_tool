@@ -6,7 +6,9 @@ app_name: str = "Dataset explorer tool"
 
 st.set_page_config(page_title=app_name, layout="wide")
 st.title(app_name)
-st.markdown("Upload csv, view summary statistics and missing values.")
+st.markdown(
+    "Upload csv, view summary statistics and missing values.\n[Learn More](https://github.com/ucsf-ferguson-lab/eda_tool)"
+)
 
 csv_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 
