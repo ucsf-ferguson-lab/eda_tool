@@ -3,57 +3,44 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
-import sys
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 
-# prevent duplicate handlers on Streamlit reruns
-if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-st.title("Column Distribution")
-st.markdown("Select a column to view its data distribution.")
+st.title("Column Distributions")
+st.markdown("Upload a CSV file to view data distributions for all columns.")
 
 csv_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 logger.debug("Waiting for CSV file upload.")
 
 if csv_file is not None:
     try:
-        df: pd.DataFrame = pd.read_csv(csv_file)
+        df = pd.read_csv(csv_file)
         logger.info(
-            f"CSV file '{csv_file.name}' successfully read with {df.shape[0]} rows."
+            f"CSV '{csv_file.name}' loaded with {df.shape[0]} rows and {df.shape[1]} columns."
         )
     except Exception as e:
-        st.error("Error reading the CSV file. Please check its format.")
+        st.error("Error reading the CSV file.")
         logger.error(f"Error reading CSV: {e}")
     else:
-        st.subheader("Select Column")
-        column = st.selectbox("Column for Distribution", df.columns)
-        logger.debug(f"Column selected: {column}")
+        st.subheader("Column Distributions")
+        for column in df.columns:
+            st.markdown(f"#### {column}")
+            fig, ax = plt.subplots(figsize=(6, 4))
 
-        st.subheader(f"Distribution for: {column}")
-        fig, ax = plt.subplots(figsize=(6, 4))
-
-        try:
-            # numeric vs non-numeric column handling
-            if pd.api.types.is_numeric_dtype(df[column]):
-                sns.histplot(df[column].dropna(), bins=20, kde=True, ax=ax)
-                logger.info(f"Plotted histogram for numeric column '{column}'.")
-            else:
-                df[column].dropna().value_counts().plot.bar(ax=ax)
-                logger.info(f"Plotted bar chart for categorical column '{column}'.")
-            st.pyplot(fig)
-            logger.debug("Plot displayed successfully in Streamlit.")
-        except Exception as e:
-            st.error("Error generating plot.")
-            logger.exception(f"Plot generation failed for column '{column}': {e}")
+            try:
+                if pd.api.types.is_numeric_dtype(df[column]):
+                    sns.histplot(df[column].dropna(), bins=20, kde=True, ax=ax)
+                    ax.set_xlabel(column)
+                    logger.info(f"Plotted numeric distribution for '{column}'.")
+                else:
+                    df[column].dropna().value_counts().plot.bar(ax=ax)
+                    ax.set_xlabel(column)
+                    logger.info(f"Plotted categorical distribution for '{column}'.")
+                st.pyplot(fig)
+                plt.close(fig)
+            except Exception as e:
+                st.error(f"Error plotting column '{column}'.")
+                logger.exception(f"Plot failed for column '{column}': {e}")
 else:
     st.info("Please upload a CSV file to get started.")
     logger.warning("No CSV file uploaded by user.")
