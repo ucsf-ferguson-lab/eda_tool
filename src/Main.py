@@ -1,19 +1,37 @@
 import streamlit as st
 import pandas as pd
 import math
+from dotenv import load_dotenv
+import logging
+
+from observability.logs import setup_otel_logging
+
+load_dotenv()
+setup_otel_logging()
+logger = logging.getLogger()
+logger.info("App started")
 
 app_name: str = "Dataset explorer tool"
-
 st.set_page_config(page_title=app_name, layout="wide")
 st.title(app_name)
 st.markdown(
     "Upload csv, view summary statistics and missing values.\n[Learn More](https://github.com/ucsf-ferguson-lab/eda_tool)"
 )
 
+# store uploaded csv in session state
 csv_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
-
 if csv_file is not None:
-    df: pd.DataFrame = pd.read_csv(csv_file)
+    try:
+        if "df" not in st.session_state:
+            st.session_state.df = pd.read_csv(csv_file)
+            logger.debug("CSV read as pandas DataFrame and stored in session_state")
+    except Exception as e:
+        st.error("Failed to load CSV. Please check the file format or encoding.")
+        logger.error(f"Error reading CSV file: {e}")
+
+# access from session state
+if "df" in st.session_state:
+    df = st.session_state.df
     st.subheader("Data Preview")
 
     # pagination
@@ -31,16 +49,30 @@ if csv_file is not None:
     start_row: int = (page - 1) * rows_per_page
     end_row: int = start_row + rows_per_page
     st.dataframe(df.iloc[start_row:end_row])
+    logger.debug(f"Displaying rows {start_row} to {end_row} out of {total_rows}")
 
-    # todo: add for non-int cols
+    # summary statistics
     st.subheader("Summary Statistics")
-    st.dataframe(df.describe())
+    try:
+        st.dataframe(df.describe())
+    except ValueError as e:
+        st.warning("Could not compute summary statistics. Check your data types.")
+        logger.warning(f"Summary statistics failed: {e}")
 
-    # null counts
+    # missing values
     st.subheader("Missing Values by Column")
-    missing_df: pd.DataFrame = pd.DataFrame(
-        {"Missing Count": df.isnull().sum(), "Missing (%)": df.isnull().mean() * 100}
-    )
-    st.dataframe(missing_df)
+    try:
+        missing_df: pd.DataFrame = pd.DataFrame(
+            {
+                "Missing Count": df.isnull().sum(),
+                "Missing (%)": df.isnull().mean() * 100,
+            }
+        )
+        st.dataframe(missing_df)
+    except Exception as e:
+        st.error("Error while analyzing missing values.")
+        logger.error(f"Missing value computation failed: {e}")
+
 else:
     st.info("Please upload a CSV file to get started.")
+    logger.warning("No file uploaded yet")
