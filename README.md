@@ -2,8 +2,6 @@
 
 Preview dataset, summary statistics, variable distribution
 
-Note: using Python 3.13.x because pyarrow doesn't support 3.14.0 yet
-
 ## Run
 
 Unix (Linux/macOS)
@@ -17,3 +15,8 @@ Windows
 ```shell
 streamlit run src/app.py
 ```
+
+## Decisions
+
+- using Python 3.13.x because pyarrow doesn't support 3.14.0 yet
+- streamlit uses file-based routing
