@@ -3,8 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from io import BytesIO
+from dotenv import load_dotenv
+import logging
 
-# todo: add logging
+from observability.logs import setup_otel_logging
+
+load_dotenv()
+setup_otel_logging()
+logger = logging.getLogger()
+logger.info("App started")
 
 # shared csv uploader, stored in session state
 uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"], key="csv_upload")
@@ -17,8 +24,10 @@ if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         st.session_state.df = df
         st.session_state.uploaded_csv_name = uploaded_file.name
+        logger.debug("Csv name and contents saved to session state")
 
         st.session_state.summary_stats = df.describe()
+        logger.debug("Summary stats generated")
 
         # generate plots & store as bytes buffers
         plot_images = []
@@ -40,12 +49,12 @@ if uploaded_file is not None:
                 plt.close(fig)
                 continue
         st.session_state.plot_images = plot_images
+        logger.debug("Plots generated and saved to session state")
 
 st.title("Dataset Explorer Tool")
 st.sidebar.info(
     "Use the sidebar to upload a CSV file. Then navigate through the pages."
 )
-
 
 if "df" not in st.session_state:
     st.warning("Please upload a CSV file in the sidebar to get started.")
