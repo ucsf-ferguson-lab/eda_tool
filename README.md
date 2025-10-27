@@ -2,6 +2,8 @@
 
 Preview dataset, summary statistics, variable distribution
 
+![](./docs/main_page.png)
+
 ## Run
 
 Unix (Linux/macOS)
